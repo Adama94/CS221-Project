@@ -44,8 +44,8 @@ def computeScore(player, week, year):
 	score += (stats.receiving_twopta * 2)
 	score += (stats.rushing_twopta * 2)
 	score += (stats.passing_twopta * 2)
-	print stats.passing_yds
-	print stats.passing_tds
+	# print stats.passing_yds
+	# print stats.passing_tds
 	return score
 
 predictions = []
@@ -59,16 +59,17 @@ for i in range(6):
 	actual.append(score)
 
 predictions = predictions[1:]
-print actual
+# print actual
 actual = actual[1:]
 
 
-# peyton_manning = [16.8, 16, 17, 17.7, 16.8, 16.6]
-# peyton_manning_actual = [5, 20, 18, 8, 6, 9]
+andrew_luck = [16.5, 18.2, 17.7, 0, 0, 19.1]
+andrew_luck_actual = [17, 8, 16, 0, 0, 27]
+
 # normalizedScores = [abs(peyton_manning[i] - peyton_manning_actual[i]) / peyton_manning_actual[i] for i in range(6)]
 
 
-error = [abs((predictions[i] - actual[i])) for i in range(5)]
+error = [abs((andrew_luck[i] - andrew_luck_actual[i])) for i in range(6)]
 print np.average(error)
 
 
