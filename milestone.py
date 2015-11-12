@@ -487,6 +487,7 @@ def addConstraints(csp, salaryCap):
     variables = ["QB", "RB1", "RB2", "WR1", "WR2", "WR3", "K", "D", "TE"]
     sumVar = get_sum_variable(csp, "salary_cap", variables, salaryCap)
     csp.add_unary_factor(sumVar, lambda x: x <= salaryCap)
+    csp.add_unary_factor(sumVar, lambda x: x >= .9 * salaryCap)
 
 csp = createCSPWithVariables()
 salaryCap = 60000
@@ -513,9 +514,6 @@ print salaries['Andrew Luck']
 
 Modify createCSPWithVariables so that variable values are (Player, cost) tuples
 Modify get_sum_variable to use this new value of the variables to ensure cost is the variable being summed
-Modify addConstraints so that the constraint is set appropriately
-
-
 
 get_sum_variable doesn't finish now, after updates it shouldn't be too slow
 '''
