@@ -1,0 +1,27 @@
+Week 1:
+Winner: 201.32
+
+Week 2: 
+Winner: 209.66
+
+Week 3:
+Winner: 252.10
+
+Week 4:
+Winner: 176.02
+
+Week 5:
+Winner: 206.54
+
+Week 6:
+Winner: 205.8
+
+Week 7:
+Winner: 224.32
+
+Week 8:
+Winner: 215.54
+
+Week 9:
+Winner: 229.18
+Theoretical Best: 251.58, $56100
