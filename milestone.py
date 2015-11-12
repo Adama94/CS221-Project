@@ -515,5 +515,6 @@ print salaries['Andrew Luck']
 Modify createCSPWithVariables so that variable values are (Player, cost) tuples
 Modify get_sum_variable to use this new value of the variables to ensure cost is the variable being summed
 
+Add something
 get_sum_variable doesn't finish now, after updates it shouldn't be too slow
 '''
