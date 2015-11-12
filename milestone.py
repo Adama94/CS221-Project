@@ -1,4 +1,5 @@
-import nflgame
+import nflgame, csv
+import numpy as np
 
 # General code for representing a weighted CSP (Constraint Satisfaction Problem).
 # All variables are being referenced by their index instead of their original
@@ -225,6 +226,12 @@ class BacktrackingSearch():
         # Print summary of solutions.
         self.print_stats()
 
+    def calculateScore(self, assignment):
+        score = 0
+        for position in assignment:
+            score += assignment[position][1]
+        return score
+
     def backtrack(self, assignment, numAssigned, weight):
         """
         Perform the back-tracking algorithms to find all possible solutions to
@@ -236,11 +243,26 @@ class BacktrackingSearch():
             and 6 was assigned to it, then assignment[A] == 6.
         @param numAssigned: Number of currently assigned variables
         @param weight: The weight of the current partial assignment.
-        """        
+        """ 
+        if len(self.allAssignments) >= 1000:
+            return
+
+        score = self.calculateScore(assignment)
+        if score > 60000:
+            return
+
+        maxSalary = 10000
+        if score + (9 - numAssigned) * maxSalary < 60000:
+            return 
+
+        minSalary = 4000
+        if score + (9 - numAssigned) * minSalary > 60000:
+            return 
+
         self.numOperations += 1
         assert weight > 0
         if numAssigned == self.csp.numVars:
-            # A satisfiable solution have been found. Update the statistics.
+            # A satisfiable solution have been found. Update the statistics.            
             self.numAssignments += 1
             newAssignment = {}
             for var in self.csp.variables:
@@ -377,14 +399,6 @@ class BacktrackingSearch():
                     queue.append(var2)
         # END_YOUR_CODE
 
-# Simple player class which allows access to name and position
-# Can easily be extended to support all statitics
-class Player:
-    def __init__(self, playerName):
-        playerObject = nflgame.find(playerName)[0]
-        self.name = playerName        
-        self.position = playerObject.position
-
 # Returns sum variable on the variables 
 def get_sum_variable(csp, name, variables, maxSum):
     """
@@ -407,18 +421,9 @@ def get_sum_variable(csp, name, variables, maxSum):
         iff the assignment of |variables| sums to |n|.
     """
     # BEGIN_YOUR_CODE (around 20 lines of code expected)
-
-    # no input variable, result should be False
-    if len(variables) == 0:
-        domain = range(maxSum + 1)
-        newVarName = ('sum', name, 'newVarName')    
-        csp.add_variable(newVarName, domain)
-        csp.add_unary_factor(newVarName, lambda x: not x)
-        return newVarName
-
     domain = []
-    for i in range(maxSum + 1):
-        for j in range(i, maxSum + 1):
+    for i in np.arange(0, maxSum + 1, 100):
+        for j in np.arange(i, maxSum + 1, 100):
             domain.append((i, j))
 
     for var in variables:
@@ -430,9 +435,9 @@ def get_sum_variable(csp, name, variables, maxSum):
         else:
             csp.add_binary_factor(('sum', name, variables[i - 1]), ('sum', name, variables[i]), lambda x,y : x[1] == y[0])         
 
-        csp.add_binary_factor(('sum', name, variables[i]), variables[i], lambda x,y : x[1] == x[0] + y)
+        csp.add_binary_factor(('sum', name, variables[i]), variables[i], lambda x,y : x[1] == x[0] + y[1])
 
-    domain = range(maxSum + 1)
+    domain = np.arange(0, maxSum + 1, 100)
     newVarName = ('sum', name, 'newVarName')    
     csp.add_variable(newVarName, domain)
     
@@ -440,32 +445,62 @@ def get_sum_variable(csp, name, variables, maxSum):
     return newVarName
     # END_YOUR_CODE
 
-def createCSPWithVariables():
-    csp = CSP()
+def getSalariesAndPositions(filename):
+    with open(filename) as inputfile:
+        results = list(csv.reader(inputfile))
+    salaries = {}
+    positions = {}
+    scores = {}
+    for i in range(1,len(results) - 1):
+        line = results[i]
+        if line[4] == 'Def':
+            name = line[3]
+            salary = line[9]
+            position = line[4]
+            score = line[8]
+        else:
+            firstName = line[4]
+            lastName = line[3]
+            name = '%s %s' %(firstName,lastName)
+            salary = line[10]
+            position = line[5]
+            score = line[9]
 
-    games = nflgame.games(2015)
-    players = nflgame.combine(games)
+        if not salary == '' and not position == '':
+            salaries[name] = int(salary)
+            positions[name] = position
+            scores[name] = float(score)
+
+    return salaries, positions, scores
+
+def createCSPWithVariables(week, year):
+    csp = CSP()
+    filename = str(year) + "W" + str(week) + ".txt"
+    salaries, positions, scores = getSalariesAndPositions(filename)
 
     TE_domain = []
     RB_domain = []
     WR_domain = []
     K_domain = []
     QB_domain = []
-    Defense_domain = set()
+    Defense_domain = []
 
-    for player in players.sort("name"):
-        player = nflgame.players[player.playerid]        
-        Defense_domain.add(player.team) 
-        if player.position == "QB":
-            QB_domain.append(player)
-        if player.position == "RB":
-            RB_domain.append(player)
-        if player.position == "WR":
-            WR_domain.append(player)
-        if player.position == "TE":
-            TE_domain.append(player)
-        if player.position == "K":
-            K_domain.append(player)
+    for player in salaries: 
+        position = positions[player]
+        salary = salaries[player]
+
+        if position == "QB":
+            QB_domain.append((player, salary))
+        if position == "RB":
+            RB_domain.append((player, salary))
+        if position == "WR":
+            WR_domain.append((player, salary))
+        if position == "TE":
+            TE_domain.append((player, salary))
+        if position == "PK":
+            K_domain.append((player, salary))
+        if position == "Def":
+            Defense_domain.append((player, salary))
     
     csp.add_variable("QB", QB_domain)
     csp.add_variable("RB1", RB_domain)
@@ -475,9 +510,9 @@ def createCSPWithVariables():
     csp.add_variable("WR3", WR_domain)
     csp.add_variable("TE", TE_domain)
     csp.add_variable("K", K_domain)
-    csp.add_variable("D", list(Defense_domain))
+    csp.add_variable("D", Defense_domain)
 
-    return csp
+    return csp, scores
 
 def addConstraints(csp, salaryCap):
     csp.add_binary_factor("RB1", "RB2", lambda x,y: x != y)
@@ -485,36 +520,34 @@ def addConstraints(csp, salaryCap):
     csp.add_binary_factor("WR2", "WR3", lambda x,y: x != y)
     csp.add_binary_factor("WR1", "WR3", lambda x,y: x != y)
     variables = ["QB", "RB1", "RB2", "WR1", "WR2", "WR3", "K", "D", "TE"]
-    sumVar = get_sum_variable(csp, "salary_cap", variables, salaryCap)
-    csp.add_unary_factor(sumVar, lambda x: x <= salaryCap)
-    csp.add_unary_factor(sumVar, lambda x: x >= .9 * salaryCap)
 
-csp = createCSPWithVariables()
+csp, scores = createCSPWithVariables(9, 2015)
 salaryCap = 60000
 addConstraints(csp, salaryCap)
+search = BacktrackingSearch()
+search.solve(csp)
 
-'''
-import csv,collections
+def computeScore(scores, assignment):
+    score = 0
+    for position in assignment:        
+        player = assignment[position][0]        
+        score += scores[player]
+    return score
 
-with open('2015W9.txt') as inputfile:
-	results = list(csv.reader(inputfile))
-salaries = {}
-for i in range(1,len(results)):
-	line = results[i]
-	if line[4] == 'Def':
-		continue
-	firstName = line[4]
-	lastName = line[3]
-	salary = line[10]
-	salaries['%s %s' %(firstName,lastName)] = salary
-print salaries['Andrew Luck']
+computedScores = []
+for assignment in search.allAssignments:
+    score = computeScore(scores, assignment)
+    computedScores.append(score)
+print max(computedScores)
+print min(computedScores)
+print np.average(computedScores)
 
+numWinners = 0
+for i in range(len(computedScores)): 
+    if computedScores[i] >= 111.21:
+        numWinners += 1
+print numWinners
 
-#### TODO ####
+print search.allAssignments[1], computeScore(scores, search.allAssignments[1]) 
+print search.allAssignments[500], computeScore(scores, search.allAssignments[500])
 
-Modify createCSPWithVariables so that variable values are (Player, cost) tuples
-Modify get_sum_variable to use this new value of the variables to ensure cost is the variable being summed
-
-Add something
-get_sum_variable doesn't finish now, after updates it shouldn't be too slow
-'''
