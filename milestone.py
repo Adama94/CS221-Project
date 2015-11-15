@@ -1,4 +1,4 @@
-import nflgame, csv
+import csv
 import numpy as np
 
 # General code for representing a weighted CSP (Constraint Satisfaction Problem).
@@ -243,7 +243,8 @@ class BacktrackingSearch():
             and 6 was assigned to it, then assignment[A] == 6.
         @param numAssigned: Number of currently assigned variables
         @param weight: The weight of the current partial assignment.
-        """ 
+        """
+
         if len(self.allAssignments) >= 1000:
             return
 
@@ -263,6 +264,8 @@ class BacktrackingSearch():
         assert weight > 0
         if numAssigned == self.csp.numVars:
             # A satisfiable solution have been found. Update the statistics.            
+            # if len(self.allAssignments) % 1000 == 0:
+            #     print len(self.allAssignments)
             self.numAssignments += 1
             newAssignment = {}
             for var in self.csp.variables:
@@ -521,33 +524,40 @@ def addConstraints(csp, salaryCap):
     csp.add_binary_factor("WR1", "WR3", lambda x,y: x != y)
     variables = ["QB", "RB1", "RB2", "WR1", "WR2", "WR3", "K", "D", "TE"]
 
-csp, scores = createCSPWithVariables(9, 2015)
-salaryCap = 60000
-addConstraints(csp, salaryCap)
-search = BacktrackingSearch()
-search.solve(csp)
+def printResults(search, scores,week):
 
-def computeScore(scores, assignment):
-    score = 0
-    for position in assignment:        
-        player = assignment[position][0]        
-        score += scores[player]
-    return score
+    def computeScore(scores, assignment):
+        score = 0
+        for position in assignment:        
+            player = assignment[position][0]        
+            score += scores[player]
+        return score
 
-computedScores = []
-for assignment in search.allAssignments:
-    score = computeScore(scores, assignment)
-    computedScores.append(score)
-print max(computedScores)
-print min(computedScores)
-print np.average(computedScores)
+    print week 
+    computedScores = []
+    for assignment in search.allAssignments:
+        score = computeScore(scores, assignment)
+        computedScores.append(score)
+    print max(computedScores)
+    print min(computedScores)
+    print np.average(computedScores)
 
-numWinners = 0
-for i in range(len(computedScores)): 
-    if computedScores[i] >= 111.21:
-        numWinners += 1
-print numWinners
+    numWinners = 0
+    for i in range(len(computedScores)): 
+        if computedScores[i] >= 111.21:
+            numWinners += 1
+    print numWinners
 
-print search.allAssignments[1], computeScore(scores, search.allAssignments[1]) 
-print search.allAssignments[500], computeScore(scores, search.allAssignments[500])
+for w in range(1,10):
+    csp, scores = createCSPWithVariables(w, 2015)
+    salaryCap = 60000
+    addConstraints(csp, salaryCap)
+    search = BacktrackingSearch()
+    search.solve(csp)
+    printResults(search,scores,w)
+
+
+
+# print search.allAssignments[1], computeScore(scores, search.allAssignments[1]) 
+# print search.allAssignments[500], computeScore(scores, search.allAssignments[500])
 
