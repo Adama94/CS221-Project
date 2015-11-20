@@ -533,22 +533,22 @@ def printResults(search, scores,week):
             score += scores[player]
         return score
 
-    print week 
+    print "These are the results of week %d" % week 
     computedScores = []
     for assignment in search.allAssignments:
         score = computeScore(scores, assignment)
         computedScores.append(score)
-    print max(computedScores)
-    print min(computedScores)
-    print np.average(computedScores)
+    print "The max score was %f" % max(computedScores)
+    print "The min score was %f" % min(computedScores)
+    print "The average score was %f" % np.average(computedScores)
 
     numWinners = 0
     for i in range(len(computedScores)): 
         if computedScores[i] >= 111.21:
-            numWinners += 1
-    print numWinners
+            numWinners += 1            
+    print "The number of winners out of 1000 was %d" % numWinners
 
-for w in range(1,10):
+for w in range(1,2):
     csp, scores = createCSPWithVariables(w, 2015)
     salaryCap = 60000
     addConstraints(csp, salaryCap)
@@ -557,7 +557,4 @@ for w in range(1,10):
     printResults(search,scores,w)
 
 
-
-# print search.allAssignments[1], computeScore(scores, search.allAssignments[1]) 
-# print search.allAssignments[500], computeScore(scores, search.allAssignments[500])
 
