@@ -245,7 +245,7 @@ class BacktrackingSearch():
         @param weight: The weight of the current partial assignment.
         """
 
-        if len(self.allAssignments) >= 1000:
+        if len(self.allAssignments) >= 10:
             return
 
         score = self.calculateScore(assignment)
