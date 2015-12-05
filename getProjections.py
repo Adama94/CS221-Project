@@ -10,7 +10,7 @@ def getProjections(filename):
         name = ''
         projection = ''
         if line[3] == 'DST':
-            name = line[2] + 'Defense'
+            name = line[4].lower() + 'Defense'
         else:
             name = line[2]
         projection = line[8]
@@ -19,11 +19,3 @@ def getProjections(filename):
         if risk != 'null':
             risks[name] = float(risk)
     return projections
-
-# for week in range(1,10):
-#     filename = 'FFA-CustomRankings2015W%s.csv' %(week)
-#     projections = getProjections(filename)
-#     if 'Aaron Rodgers' in projections:
-#         print projections['Aaron Rodgers']
-#     else:
-#         print 'bye/injured'
