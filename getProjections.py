@@ -20,10 +20,10 @@ def getProjections(filename):
             risks[name] = float(risk)
     return projections
 
-for week in range(1,10):
-    filename = 'FFA-CustomRankings2015W%s.csv' %(week)
-    projections = getProjections(filename)
-    if 'Aaron Rodgers' in projections:
-        print projections['Aaron Rodgers']
-    else:
-        print 'bye/injured'
+# for week in range(1,10):
+#     filename = 'FFA-CustomRankings2015W%s.csv' %(week)
+#     projections = getProjections(filename)
+#     if 'Aaron Rodgers' in projections:
+#         print projections['Aaron Rodgers']
+#     else:
+#         print 'bye/injured'

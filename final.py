@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+import random
 # import getProjections as gP
 
 # General code for representing a weighted CSP (Constraint Satisfaction Problem).
@@ -245,15 +246,15 @@ class BacktrackingSearch():
         @param numAssigned: Number of currently assigned variables
         @param weight: The weight of the current partial assignment.
         """
-
-        if len(self.allAssignments) >= 100:
+        if len(self.allAssignments) >= 1000:
             return
 
         score = self.calculateScore(assignment)
+
         if score > 60000:
             return
 
-        maxSalary = 10000
+        maxSalary = 9400
         if score + (9 - numAssigned) * maxSalary < 60000:
             return 
 
@@ -264,9 +265,10 @@ class BacktrackingSearch():
         self.numOperations += 1
         assert weight > 0
         if numAssigned == self.csp.numVars:
+            # print score, len(self.allAssignments)
             # A satisfiable solution have been found. Update the statistics.            
-            # if len(self.allAssignments) % 1000 == 0:
-            #     print len(self.allAssignments)
+            if len(self.allAssignments) % 1000 == 0:
+                print len(self.allAssignments)
             self.numAssignments += 1
             newAssignment = {}
             for var in self.csp.variables:
@@ -288,7 +290,8 @@ class BacktrackingSearch():
         # Select the next variable to be assigned.
         var = self.get_unassigned_variable(assignment)
         # Get an ordering of the values.
-        ordered_values = self.domains[var]
+        sorted_by_projection = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
+        ordered_values = sorted_by_projection
 
         # Continue the backtracking recursion using |var| and |ordered_values|.
         if not self.ac3:
@@ -336,6 +339,12 @@ class BacktrackingSearch():
             # Select a variable without any heuristics.
             for var in self.csp.variables:
                 if var not in assignment: return var
+            # choices = []
+            # for var in self.csp.variables:
+            #     if var not in assignment:
+            #         choices.append(var)
+            # var = random.choice(choices)
+            # return var
         else:
             # Problem 1b
             # Heuristic: most constrained variable (MCV)
@@ -360,48 +369,48 @@ class BacktrackingSearch():
             return mcv
             # END_YOUR_CODE
 
-    def arc_consistency_check(self, var):
-        """
-        Perform the AC-3 algorithm. The goal is to reduce the size of the
-        domain values for the unassigned variables based on arc consistency.
+    # def arc_consistency_check(self, var):
+    #     """
+    #     Perform the AC-3 algorithm. The goal is to reduce the size of the
+    #     domain values for the unassigned variables based on arc consistency.
 
-        @param var: The variable whose value has just been set.
-        """
-        # Problem 1c
-        # Hint: How to get variables neighboring variable |var|?
-        # => for var2 in self.csp.get_neighbor_vars(var):
-        #       # use var2
-        #
-        # Hint: How to check if two values are inconsistent?
-        # For unary factors
-        #   => self.csp.unaryFactors[var1][val1] == 0
-        #
-        # For binary factors
-        #   => self.csp.binaryFactors[var1][var2][val1][val2] == 0
-        #   (self.csp.binaryFactors[var1][var2] returns a nested dict of all assignments)
+    #     @param var: The variable whose value has just been set.
+    #     """
+    #     # Problem 1c
+    #     # Hint: How to get variables neighboring variable |var|?
+    #     # => for var2 in self.csp.get_neighbor_vars(var):
+    #     #       # use var2
+    #     #
+    #     # Hint: How to check if two values are inconsistent?
+    #     # For unary factors
+    #     #   => self.csp.unaryFactors[var1][val1] == 0
+    #     #
+    #     # For binary factors
+    #     #   => self.csp.binaryFactors[var1][var2][val1][val2] == 0
+    #     #   (self.csp.binaryFactors[var1][var2] returns a nested dict of all assignments)
 
-        # BEGIN_YOUR_CODE (around 20 lines of code expected)
-        def enforceArcConsistency(X_i, X_j):           
-            valuesToRemove = []
-            for value_i in self.domains[X_i]:
-                shouldAdd = True
-                for value_j in self.domains[X_j]:
-                    if not self.csp.binaryFactors[X_i][X_j][value_i][value_j] == 0:
-                        shouldAdd = False
-                if shouldAdd:
-                    valuesToRemove.append(value_i)
-            for val in valuesToRemove:
-                self.domains[X_i].remove(val)
+    #     # BEGIN_YOUR_CODE (around 20 lines of code expected)
+    #     def enforceArcConsistency(X_i, X_j):           
+    #         valuesToRemove = []
+    #         for value_i in self.domains[X_i]:
+    #             shouldAdd = True
+    #             for value_j in self.domains[X_j]:
+    #                 if not self.csp.binaryFactors[X_i][X_j][value_i][value_j] == 0:
+    #                     shouldAdd = False
+    #             if shouldAdd:
+    #                 valuesToRemove.append(value_i)
+    #         for val in valuesToRemove:
+    #             self.domains[X_i].remove(val)
 
-        queue = [var]
-        while queue:
-            var1 = queue.pop(0)
-            for var2 in self.csp.get_neighbor_vars(var1):
-                domain_var2 = set(self.domains[var2])
-                enforceArcConsistency(var2, var1)
-                if set(self.domains[var2]) != domain_var2:
-                    queue.append(var2)
-        # END_YOUR_CODE
+    #     queue = [var]
+    #     while queue:
+    #         var1 = queue.pop(0)
+    #         for var2 in self.csp.get_neighbor_vars(var1):
+    #             domain_var2 = set(self.domains[var2])
+    #             enforceArcConsistency(var2, var1)
+    #             if set(self.domains[var2]) != domain_var2:
+    #                 queue.append(var2)
+    #     # END_YOUR_CODE
 
 # Returns sum variable on the variables 
 def get_sum_variable(csp, name, variables, maxSum):
@@ -493,6 +502,39 @@ def getSalariesAndPositions(filename):
 
     return salaries, positions, scores
 
+def getFutureSalariesAndPositions(filename):
+    with open(filename) as inputfile:
+        results = list(csv.reader(inputfile))
+    salaries = {}
+    positions = {}
+    for i in range(1,len(results) - 1):
+        line = results[i]
+        if line[1] == 'D':
+            name = line[8].lower()+'Defense'
+            salary = line[6]
+            position = "Def"
+        elif line[1] == 'K':
+            firstName = line[2]
+            lastName = line[3]
+            name = '%s %s' %(firstName,lastName)
+            salary = line[6]
+            position = 'PK'
+        else:
+            firstName = line[2]
+            lastName = line[3]
+            name = '%s %s' %(firstName,lastName)
+            if name == 'Odell Beckham Jr.':
+                name = 'Odell Beckham'
+            salary = line[6]
+            position = line[1]
+
+        if not salary == '' and not position == '':
+            salaries[name] = int(salary)
+            positions[name] = position
+
+    scores = {}
+    return salaries, positions, scores
+
 def getProjections(filename):
     with open(filename) as inputfile:
         results = list(csv.reader(inputfile))
@@ -519,7 +561,9 @@ def createCSPWithVariables(week, year):
     yw = str(year) + "W" + str(week)
     filename = yw + ".txt"
     filename2 = 'FFA-CustomRankings'+yw+'.csv'
-    salaries, positions, scores = getSalariesAndPositions(filename)
+    filename3 = 'FanDuel'+yw+'.csv'
+    # salaries, positions, scores = getSalariesAndPositions(filename)
+    salaries, positions, scores = getFutureSalariesAndPositions(filename3)
     projections = getProjections(filename2)
 
     TE_domain = []
@@ -532,19 +576,28 @@ def createCSPWithVariables(week, year):
     for player in salaries: 
         position = positions[player]
         salary = salaries[player]
+        if player in projections:
+            projection = projections[player]
+        else:
+            projection = 0
+        # projected points per 1000 dollars
+        if salary == 0:
+            efficiency = 0
+        else:
+            efficiency = projection*1000/salary
 
         if position == "QB":
-            QB_domain.append((player, salary))
+            QB_domain.append((player, salary, projection, efficiency))
         if position == "RB":
-            RB_domain.append((player, salary))
+            RB_domain.append((player, salary, projection, efficiency))
         if position == "WR":
-            WR_domain.append((player, salary))
+            WR_domain.append((player, salary, projection, efficiency))
         if position == "TE":
-            TE_domain.append((player, salary))
+            TE_domain.append((player, salary, projection, efficiency))
         if position == "PK":
-            K_domain.append((player, salary))
+            K_domain.append((player, salary, projection, efficiency))
         if position == "Def":
-            Defense_domain.append((player, salary))
+            Defense_domain.append((player, salary, projection, efficiency))
     
     csp.add_variable("QB", QB_domain)
     csp.add_variable("RB1", RB_domain)
@@ -595,8 +648,9 @@ def printProjectedResults(search,scores,week,projections):
     def computeProjection(assignment):
         projection = 0
         for position in assignment:        
-            player = assignment[position][0]        
-            projection += projections[player]
+            player = assignment[position][0]  
+            if player in projections:      
+                projection += projections[player]
         return projection
     def computeScore(assignment):
         score = 0
@@ -615,35 +669,66 @@ def printProjectedResults(search,scores,week,projections):
 
     computedProjections = np.array(computedProjections)
     s = len(computedProjections)
-    maxIndices = computedProjections.argsort()[:s/2]
+    maxIndices = computedProjections.argsort()[:s/20]
 
     sumTop = 0
     sumBottom = 0
     for i in range(s):
         if i in maxIndices:
-            sumBottom += computedScores[i]
-        else:
             sumTop += computedScores[i]
+        else:
+            sumBottom += computedScores[i]
     print sumBottom,sumTop
-    print sumBottom/50,sumTop/50
-
+    print sumBottom/5000,sumTop/5000
+    print 'Week %s' % w
     print "The max score was %f" % max(computedScores)
     print "The min score was %f" % min(computedScores)
     print "The average score was %f" % np.average(computedScores)
 
     numWinners = 0
-    for i in range(len(computedScores)): 
+    for i in maxIndices: 
         if computedScores[i] >= 111.21:
             numWinners += 1            
-    print "The number of winners out of 1000 was %d" % numWinners
+    print "The number of winners was %d out of %d" % (numWinners, len(maxIndices))
+    return numWinners
 
-for w in range(1,10):
-    csp, scores, projections = createCSPWithVariables(w, 2015)
-    salaryCap = 60000
-    addConstraints(csp, salaryCap)
-    search = BacktrackingSearch()
-    search.solve(csp)
-    printProjectedResults(search,scores,w,projections)
+# win = 0
+# total = 0
+# for w in range(1,10):
+#     csp, scores, projections = createCSPWithVariables(w, 2015)
+#     salaryCap = 60000
+#     addConstraints(csp, salaryCap)
+#     search = BacktrackingSearch()
+#     search.solve(csp)
+#     win += printProjectedResults(search,scores,w,projections)
+#     total += 5000
+
+# print win, total, float(win)/total
+
+def computeProjection(assignment):
+    projection = 0
+    for position in assignment:        
+        player = assignment[position][0]  
+        if player in projections:      
+            projection += projections[player]
+    return projection
+
+csp, scores, projections = createCSPWithVariables(13, 2015)
+salaryCap = 60000
+addConstraints(csp, salaryCap)
+search = BacktrackingSearch()
+search.solve(csp)
+computedProjections = []
+
+for assignment in search.allAssignments:
+    projection = computeProjection(assignment)
+    computedProjections.append(projection)
+maxAssignment = search.allAssignments[np.argmax(computedProjections)]
+print maxAssignment, max(computedProjections)
+
+
+
+
 
 
 
