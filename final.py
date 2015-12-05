@@ -526,7 +526,7 @@ def addConstraints(csp, salaryCap):
 
 def printResults(search, scores,week):
 
-    def computeScore(scores, assignment):
+    def computeScore(assignment):
         score = 0
         for position in assignment:        
             player = assignment[position][0]        
@@ -536,7 +536,7 @@ def printResults(search, scores,week):
     print "These are the results of week %d" % week 
     computedScores = []
     for assignment in search.allAssignments:
-        score = computeScore(scores, assignment)
+        score = computeScore(assignment)
         computedScores.append(score)
     print "The max score was %f" % max(computedScores)
     print "The min score was %f" % min(computedScores)
@@ -548,7 +548,57 @@ def printResults(search, scores,week):
             numWinners += 1            
     print "The number of winners out of 1000 was %d" % numWinners
 
-for w in range(1,2):
+
+def printProjectedResults(search,scores,week,projections):
+    def computeProjection(assignment):
+        projection = 0
+        for position in assignment:        
+            player = assignment[position][0]        
+            projection += projections[player]
+        return projection
+    def computeScore(assignment):
+        score = 0
+        for position in assignment:        
+            player = assignment[position][0]        
+            score += scores[player]
+        return score
+
+    computedScores = []
+    computedProjections = []
+    for assignment in search.allAssignments:
+        score = computeScore(assignment)
+        projection = computeProjection(assignment)
+        computedScores.append(score)
+        computedProjections.append(projection)
+
+    computedProjections = np.array(computedProjections)
+    s = len(computedProjections)/2
+    maxIndices = computedProjections.argsort()[:s]
+
+    sumTop = 0
+    sumBottom = 0
+    for i in range(s):
+        if i in maxIndices:
+            sumTop += computedScores[i]
+        else:
+            sumBottom += computedScores[i]
+    print sumTop,sumBottom
+
+    print "The max score was %f" % max(computedScores)
+    print "The min score was %f" % min(computedScores)
+    print "The average score was %f" % np.average(computedScores)
+
+    numWinners = 0
+    for i in range(len(computedScores)): 
+        if computedScores[i] >= 111.21:
+            numWinners += 1            
+    print "The number of winners out of 1000 was %d" % numWinners
+
+
+
+
+
+for w in range(1,10):
     csp, scores = createCSPWithVariables(w, 2015)
     salaryCap = 60000
     addConstraints(csp, salaryCap)
