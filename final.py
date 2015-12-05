@@ -476,6 +476,7 @@ def getSalariesAndPositions(filename):
 
     return salaries, positions, scores
 
+# Modify this to return projections as well
 def createCSPWithVariables(week, year):
     csp = CSP()
     filename = str(year) + "W" + str(week) + ".txt"
@@ -550,6 +551,7 @@ def printResults(search, scores,week):
 
 
 def printProjectedResults(search,scores,week,projections):
+
     def computeProjection(assignment):
         projection = 0
         for position in assignment:        
@@ -594,17 +596,13 @@ def printProjectedResults(search,scores,week,projections):
             numWinners += 1            
     print "The number of winners out of 1000 was %d" % numWinners
 
-
-
-
-
-for w in range(1,10):
+for w in range(1,2):
     csp, scores = createCSPWithVariables(w, 2015)
     salaryCap = 60000
     addConstraints(csp, salaryCap)
     search = BacktrackingSearch()
     search.solve(csp)
-    printResults(search,scores,w)
+    printProjectedResults(search,scores,w,projections)
 
 
 
