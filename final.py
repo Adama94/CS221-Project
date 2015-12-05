@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+# import getProjections as gP
 
 # General code for representing a weighted CSP (Constraint Satisfaction Problem).
 # All variables are being referenced by their index instead of their original
@@ -245,7 +246,7 @@ class BacktrackingSearch():
         @param weight: The weight of the current partial assignment.
         """
 
-        if len(self.allAssignments) >= 1000:
+        if len(self.allAssignments) >= 100:
             return
 
         score = self.calculateScore(assignment)
@@ -457,7 +458,21 @@ def getSalariesAndPositions(filename):
     for i in range(1,len(results) - 1):
         line = results[i]
         if line[4] == 'Def':
-            name = line[3]
+            if line[5] == 'nwe':
+                line[5] = 'ne'
+            if line[5] == 'kan':
+                line[5] = 'kc'
+            if line[5] == 'nor':
+                line[5] = 'no'
+            if line[5] == 'gnb':
+                line[5] = 'gb'
+            if line[5] == 'tam':
+                line[5] = 'tb'
+            if line[5] == 'sfo':
+                line[5] = 'sf'
+            if line[5] == 'sdg':
+                line[5] = 'sd'
+            name = line[5]+'Defense'
             salary = line[9]
             position = line[4]
             score = line[8]
@@ -465,6 +480,8 @@ def getSalariesAndPositions(filename):
             firstName = line[4]
             lastName = line[3]
             name = '%s %s' %(firstName,lastName)
+            if name == 'Odell BeckhamJr.':
+                name = 'Odell Beckham'
             salary = line[10]
             position = line[5]
             score = line[9]
@@ -476,11 +493,34 @@ def getSalariesAndPositions(filename):
 
     return salaries, positions, scores
 
+def getProjections(filename):
+    with open(filename) as inputfile:
+        results = list(csv.reader(inputfile))
+    projections = {}
+    risks = {}
+    for i in range(1,len(results) - 1):
+        line = results[i]
+        name = ''
+        projection = ''
+        if line[3] == 'DST':
+            name = line[4].lower() + 'Defense'
+        else:
+            name = line[2]
+        projection = line[8]
+        projections[name] = float(projection)
+        risk = line[21]
+        if risk != 'null':
+            risks[name] = float(risk)
+    return projections
+
 # Modify this to return projections as well
 def createCSPWithVariables(week, year):
     csp = CSP()
-    filename = str(year) + "W" + str(week) + ".txt"
+    yw = str(year) + "W" + str(week)
+    filename = yw + ".txt"
+    filename2 = 'FFA-CustomRankings'+yw+'.csv'
     salaries, positions, scores = getSalariesAndPositions(filename)
+    projections = getProjections(filename2)
 
     TE_domain = []
     RB_domain = []
@@ -516,7 +556,7 @@ def createCSPWithVariables(week, year):
     csp.add_variable("K", K_domain)
     csp.add_variable("D", Defense_domain)
 
-    return csp, scores
+    return csp, scores, projections
 
 def addConstraints(csp, salaryCap):
     csp.add_binary_factor("RB1", "RB2", lambda x,y: x != y)
@@ -574,17 +614,18 @@ def printProjectedResults(search,scores,week,projections):
         computedProjections.append(projection)
 
     computedProjections = np.array(computedProjections)
-    s = len(computedProjections)/2
-    maxIndices = computedProjections.argsort()[:s]
+    s = len(computedProjections)
+    maxIndices = computedProjections.argsort()[:s/2]
 
     sumTop = 0
     sumBottom = 0
     for i in range(s):
         if i in maxIndices:
-            sumTop += computedScores[i]
-        else:
             sumBottom += computedScores[i]
-    print sumTop,sumBottom
+        else:
+            sumTop += computedScores[i]
+    print sumBottom,sumTop
+    print sumBottom/50,sumTop/50
 
     print "The max score was %f" % max(computedScores)
     print "The min score was %f" % min(computedScores)
@@ -596,8 +637,8 @@ def printProjectedResults(search,scores,week,projections):
             numWinners += 1            
     print "The number of winners out of 1000 was %d" % numWinners
 
-for w in range(1,2):
-    csp, scores = createCSPWithVariables(w, 2015)
+for w in range(1,10):
+    csp, scores, projections = createCSPWithVariables(w, 2015)
     salaryCap = 60000
     addConstraints(csp, salaryCap)
     search = BacktrackingSearch()
