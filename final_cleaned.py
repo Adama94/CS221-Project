@@ -4,19 +4,33 @@ import random
 from printProjectedResults import printProjectedResults, computeFutureProjection
 from createCSP import createCSPWithVariables, addConstraints
 from BacktrackSearch import BacktrackingSearch
-from CSP import CSP
 from getSalaries import getSalariesAndPositions, getFutureSalariesAndPositions
 from getProjections import getProjections
 
 
-
+# specify whether you want to evaluate our algorithm on past data (False)
+# or use it to generate optimal lineups for a future week (True)
 future = True
-numLineups = 10000
+# number of optimal lineups to generate
+numLineups = 50000
+# once lineups are generated, what percentage to submit given their projected scores
 percentLineupsUsed = .5
+# this variable doesn't actually get used; fix this where it is hardcoded in solve of BacktrackingSearch
+salaryCap = 60000
+# week to generate lineups for
+futureWeek = 13
+# year to generate lineups for
+futureYear = 2015
+# week to evaluate lineups for
+evalWeeks = range(1,10)
+# year to evaluate lineups for
+evalYear = 2015
+
+
+
 if future:
 	future = True
-	csp, scores, projections = createCSPWithVariables(13, 2015,future)
-	salaryCap = 60000
+	csp, scores, projections = createCSPWithVariables(futureWeek, futureYear,future)
 	addConstraints(csp, salaryCap)
 	search = BacktrackingSearch()
 	search.solve(csp,numLineups)
@@ -30,9 +44,8 @@ if future:
 else:
 	win = 0
 	total = 0
-	for w in range(1,10):
-	    csp, scores, projections = createCSPWithVariables(w, 2015,future)
-	    salaryCap = 60000
+	for w in evalWeeks:
+	    csp, scores, projections = createCSPWithVariables(w, evalYear, future)
 	    addConstraints(csp, salaryCap)
 	    search = BacktrackingSearch()
 	    search.solve(csp,numLineups)
