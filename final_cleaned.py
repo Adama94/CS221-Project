@@ -29,7 +29,6 @@ evalYear = 2015
 
 
 if future:
-	future = True
 	csp, scores, projections = createCSPWithVariables(futureWeek, futureYear,future)
 	addConstraints(csp, salaryCap)
 	search = BacktrackingSearch()

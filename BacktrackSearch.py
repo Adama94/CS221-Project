@@ -3,6 +3,8 @@
 #   search = BacktrackingSearch()
 #   search.solve(csp)
 
+import numpy as np
+
 class BacktrackingSearch():
 
     def reset_results(self):
@@ -95,6 +97,9 @@ class BacktrackingSearch():
         # The dictionary of domains of every variable in the CSP.
         self.domains = {var: list(self.csp.values[var]) for var in self.csp.variables}
 
+        # Set the total number of lineups to generate
+        self.numLineups = numLineups
+
         # Perform backtracking search.
         self.backtrack({}, 0, 1, numLineups)
         # Print summary of solutions.
@@ -106,7 +111,7 @@ class BacktrackingSearch():
             score += assignment[position][1]
         return score
 
-    def backtrack(self, assignment, numAssigned, weight, numLineups):
+    def backtrack(self, assignment, numAssigned, weight, numLineupsPerPlayer):
         """
         Perform the back-tracking algorithms to find all possible solutions to
         the CSP.
@@ -118,7 +123,7 @@ class BacktrackingSearch():
         @param numAssigned: Number of currently assigned variables
         @param weight: The weight of the current partial assignment.
         """
-        if len(self.allAssignments) >= numLineups:
+        if len(self.allAssignments) >= self.numLineups:
             return
 
         score = self.calculateScore(assignment)
@@ -161,8 +166,22 @@ class BacktrackingSearch():
         # Select the next variable to be assigned.
         var = self.get_unassigned_variable(assignment)
         # Sort values by efficiency
-        sorted_by_projection = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
-        ordered_values = sorted_by_projection
+        # sorted_by_projection = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
+        # ordered_values = sorted_by_projection
+
+        # Need to generalize to check if we are using salaries or projections
+        salary_array = []
+        curr_players = assignment.values()
+        players = []
+        for player in self.domains[var]:
+            if player not in curr_players:
+                players.append(player)
+                salary_array.append(float(player[1]))
+
+        salary_sum = sum(salary_array)
+        prob_array = map(lambda x: x / salary_sum, salary_array)
+        stones = np.random.multinomial(numLineupsPerPlayer, prob_array)
+        ordered_values = {players[i]:stones[i] for i in range(0, len(stones)) if stones[i] > 0}
 
         # Continue the backtracking recursion using |var| and |ordered_values|.
         if not self.ac3:
@@ -171,7 +190,7 @@ class BacktrackingSearch():
                 deltaWeight = self.get_delta_weight(assignment, var, val)
                 if deltaWeight > 0:
                     assignment[var] = val
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, numLineups)
+                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val])
                     del assignment[var]
         else:
             # Arc consistency check is enabled.
@@ -191,7 +210,7 @@ class BacktrackingSearch():
                     # enforce arc consistency
                     self.arc_consistency_check(var)
 
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, numLineups)
+                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val])
                     # restore the previous domains
                     self.domains = localCopy
                     del assignment[var]
