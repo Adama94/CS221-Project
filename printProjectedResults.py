@@ -36,7 +36,7 @@ def printProjectedResults(search,scores,week,projections,percentLineupsUsed):
 
     computedProjections = np.array(computedProjections)
     s = len(computedProjections)
-    maxIndices = computedProjections.argsort()[:-int(s*percentLineupsUsed)]
+    maxIndices = computedProjections.argsort()[-int(s*percentLineupsUsed):]
 
     sumTop = 0
     sumBottom = 0
@@ -49,7 +49,7 @@ def printProjectedResults(search,scores,week,projections,percentLineupsUsed):
     print "The max score was %f" % max(computedScores)
     print "The min score was %f" % min(computedScores)
     print "The average score was %f" % np.average(computedScores)
-    print sumBottom/(s-len(maxIndices)),sumTop/(len(maxIndices))
+    # print sumBottom/(s-len(maxIndices)),sumTop/(len(maxIndices))
 
 
     numWinners = 0
