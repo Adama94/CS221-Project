@@ -88,7 +88,8 @@ def pastPerformance(ep_greedy, numIters, numEpGreedyTrials):
 					win_from_week, total_from_week = printProjectedResults(search,scores,w,projections,percentLineupsUsed)
 					win += win_from_week
 					total += total_from_week
-				average += float(win)/(total*float(numIters))
+				if total > 0:
+					average += float(win)/(total*float(numIters))
 			print 'Average win percentage with comparison index %d: %f' % (k, average)
 		print '\n'
 
