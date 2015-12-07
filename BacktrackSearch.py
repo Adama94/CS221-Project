@@ -174,15 +174,17 @@ class BacktrackingSearch():
         var = self.get_unassigned_variable(assignment)
         ordered_values = []
         p = None
-        if self.ep_greedy == -1:
+
+        # Efficiency-based algorithm - not based on epsilon-greedy at all
+        if self.ep_greedy < 0.0:
             efficiency_list = [player[3] for player in self.domains[var]]
             efficiency_sum = sum(efficiency_list)
             efficiency_list = map(lambda x: x / efficiency_sum, efficiency_list)
             pick = np.random.multinomial(1, efficiency_list)
-            for i in range(len(pick)):
-                if pick[i] == 1:
-                    ordered_values.append(self.domains[var][i])
-                    break
+            ordered_values.append(self.domains[var][pick.index(1)])
+
+        # Epsilon-Greedy Algorithm - deterministic will sort by efficiency, random will choose
+        # from a multinomial distribution based on the salaries of each player
         else:
             p = np.random.random_sample()
             if p <= self.ep_greedy:
@@ -208,30 +210,32 @@ class BacktrackingSearch():
                 deltaWeight = self.get_delta_weight(assignment, var, val)
                 if deltaWeight > 0:
                     assignment[var] = val
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
+                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, \
+                        ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
                     del assignment[var]
-        else:
-            # Arc consistency check is enabled.
-            # Problem 1c: skeleton code for AC-3
-            # You need to implement arc_consistency_check().
-            for val in ordered_values:
-                deltaWeight = self.get_delta_weight(assignment, var, val)
-                if deltaWeight > 0:
-                    assignment[var] = val
-                    # create a deep copy of domains as we are going to look
-                    # ahead and change domain values
-                    localCopy = copy.deepcopy(self.domains)
-                    # fix value for the selected variable so that hopefully we
-                    # can eliminate values for other variables
-                    self.domains[var] = [val]
+        # else:
+        #     # Arc consistency check is enabled.
+        #     # Problem 1c: skeleton code for AC-3
+        #     # You need to implement arc_consistency_check().
+        #     for val in ordered_values:
+        #         deltaWeight = self.get_delta_weight(assignment, var, val)
+        #         if deltaWeight > 0:
+        #             assignment[var] = val
+        #             # create a deep copy of domains as we are going to look
+        #             # ahead and change domain values
+        #             localCopy = copy.deepcopy(self.domains)
+        #             # fix value for the selected variable so that hopefully we
+        #             # can eliminate values for other variables
+        #             self.domains[var] = [val]
 
-                    # enforce arc consistency
-                    self.arc_consistency_check(var)
+        #             # enforce arc consistency
+        #             self.arc_consistency_check(var)
 
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
-                    # restore the previous domains
-                    self.domains = localCopy
-                    del assignment[var]
+        #             self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, \
+        #                 ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
+        #             # restore the previous domains
+        #             self.domains = localCopy
+        #             del assignment[var]
 
     def get_unassigned_variable(self, assignment):
         """

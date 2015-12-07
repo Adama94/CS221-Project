@@ -49,7 +49,6 @@ def printProjectedResults(search,scores,week,projections,percentLineupsUsed):
 
 
     numWinners = 0
-    average = np.average(computedScores)
     for i in maxIndices: 
         if computedScores[i] >= 111.21:
             numWinners += 1 
@@ -58,4 +57,4 @@ def printProjectedResults(search,scores,week,projections,percentLineupsUsed):
     # print "The min score was %f" % min(computedScores)
     # print "The average score was %f" % np.average(computedScores)           
     # print "The number of winners was %d out of %d" % (numWinners, len(maxIndices))
-    return numWinners, s
+    return numWinners, len(maxIndices)
