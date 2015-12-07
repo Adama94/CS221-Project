@@ -71,7 +71,7 @@ class BacktrackingSearch():
             if w == 0: return w
         return w
 
-    def solve(self, csp, numLineups, ep_greedy, mcv = False, ac3 = False):
+    def solve(self, csp, numLineups, ep_greedy, comparisonIndex, mcv = False, ac3 = False):
         """
         Solves the given weighted CSP using heuristics as specified in the
         parameter. Note that unlike a typical unweighted CSP where the search
@@ -103,8 +103,11 @@ class BacktrackingSearch():
         # Set the epsilon-greedy probability
         self.ep_greedy = ep_greedy
 
+        # Comparison index
+        self.comparisonIndex = comparisonIndex
+
         # Perform backtracking search.
-        if ep_greedy == -1:
+        if ep_greedy < 0.0:
             while len(self.allAssignments) < self.numLineups:
                 self.backtrack({}, 0, 1, numLineups)
         else:
@@ -180,7 +183,7 @@ class BacktrackingSearch():
             efficiency_list = [player[3] for player in self.domains[var]]
             efficiency_sum = sum(efficiency_list)
             efficiency_list = map(lambda x: x / efficiency_sum, efficiency_list)
-            pick = np.random.multinomial(1, efficiency_list)
+            pick = list(np.random.multinomial(1, efficiency_list))
             ordered_values.append(self.domains[var][pick.index(1)])
 
         # Epsilon-Greedy Algorithm - deterministic will sort by efficiency, random will choose
@@ -188,7 +191,7 @@ class BacktrackingSearch():
         else:
             p = np.random.random_sample()
             if p <= self.ep_greedy:
-                ordered_values = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
+                ordered_values = sorted(self.domains[var], key=lambda tup: tup[self.comparisonIndex],reverse=True)
             else:
                 salary_array = []
                 curr_players = assignment.values()
@@ -196,7 +199,7 @@ class BacktrackingSearch():
                 for player in self.domains[var]:
                     if player not in curr_players:
                         players.append(player)
-                        salary_array.append(float(player[1]))
+                        salary_array.append(float(player[self.comparisonIndex]))
 
                 salary_sum = sum(salary_array)
                 prob_array = map(lambda x: x / salary_sum, salary_array)

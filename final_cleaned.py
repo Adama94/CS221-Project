@@ -35,8 +35,8 @@ evalYear = 2015
 def parseArgs():
 	flag = sys.argv[1]
 	if flag == '-t':
-		ep_greedy = float(sys.argv[3])
-		numIters = 1
+		ep_greedy = float(sys.argv[4])
+		numIters = int(sys.argv[3])
 		numEpGreedyTrials = 1
 	elif flag == '-f':
 		ep_greedy = 1.0
@@ -54,43 +54,47 @@ def futureProjections(ep_greedy, numIters, numEpGreedyTrials):
 		if i > 0:
 			ep_greedy -= .2
 
-		average = 0.0
-		for j in range(0, numIters):
-			search.solve(csp,numLineups,ep_greedy)
-			computedProjections = []
-
-			for assignment in search.allAssignments:
-			    projection = computeFutureProjection(assignment,projections)
-			    computedProjections.append(projection)
-			average += float(max(computedProjections)) / float(numIters)
-
 		print 'BacktrackingSearch with epsilon-greedy value of %f' % ep_greedy
-		print 'Average Max Projection: %f' % average
+		for k in range(1,4):
+			average = 0.0
+			for j in range(0, numIters):
+				search.solve(csp,numLineups,ep_greedy,k)
+				computedProjections = []
+
+				for assignment in search.allAssignments:
+				    projection = computeFutureProjection(assignment,projections)
+				    computedProjections.append(projection)
+				average += float(max(computedProjections)) / float(numIters)
+
+			print 'Average Max Projection with comparison index %d: %f' % (k, average)
+		print '\n'
 
 def pastPerformance(ep_greedy, numIters, numEpGreedyTrials):
 	for i in range(0, numEpGreedyTrials):
 		if i > 0:
 			ep_greedy -= .2
 
-		average = 0.0
-		for j in range(0,numIters):
-			win = 0
-			total = 0
-			for w in evalWeeks:
-				csp, scores, projections = createCSPWithVariables(w, evalYear, future)
-				addConstraints(csp, salaryCap)
-				search = BacktrackingSearch()
-				search.solve(csp,numLineups,ep_greedy)
-				win_from_week, total_from_week = printProjectedResults(search,scores,w,projections,percentLineupsUsed)
-				win += win_from_week
-				total += total_from_week
-			average += float(win)/(total*float(numIters))
 		print 'BacktrackingSearch with epsilon-greedy value of %f' % ep_greedy
-		print 'Average win percentage: %f' % average
+		for k in range(1, 4):
+			average = 0.0
+			for j in range(0,numIters):
+				win = 0
+				total = 0
+				for w in evalWeeks:
+					csp, scores, projections = createCSPWithVariables(w, evalYear, future)
+					addConstraints(csp, salaryCap)
+					search = BacktrackingSearch()
+					search.solve(csp,numLineups,ep_greedy,k)
+					win_from_week, total_from_week = printProjectedResults(search,scores,w,projections,percentLineupsUsed)
+					win += win_from_week
+					total += total_from_week
+				average += float(win)/(total*float(numIters))
+			print 'Average win percentage with comparison index %d: %f' % (k, average)
+		print '\n'
 
 if __name__ == '__main__':
 	if len(sys.argv) <= 3:
-		print 'usage (for one test): python final_cleaned.py -t [0 for Past or 1 for Future] [float between 0 and 1 for epsilon-greedy prob (higher is more deterministic]'
+		print 'usage (for one test): python final_cleaned.py -t [0 for Past or 1 for Future] [1 to 100 for number of iterations of the each test] [float between 0 and 1 for epsilon-greedy prob (higher is more deterministic]'
 		print 'usage (for test suite): python final_cleaned.py -f [0 for Past or 1 for Future] [1 to 100 for number of iterations of the each test]'
 
 	else:
