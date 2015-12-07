@@ -37,12 +37,12 @@ class BacktrackingSearch():
         """
         Prints a message summarizing the outcome of the solver.
         """
-        if self.optimalAssignment:
-            print "Found %d optimal assignments with weight %f in %d operations" % \
-                (self.numOptimalAssignments, self.optimalWeight, self.numOperations)
-            print "First assignment took %d operations" % self.firstAssignmentNumOperations
-        else:
-            print "No solution was found."
+        # if self.optimalAssignment:
+        #     print "Found %d optimal assignments with weight %f in %d operations" % \
+        #         (self.numOptimalAssignments, self.optimalWeight, self.numOperations)
+        #     print "First assignment took %d operations" % self.firstAssignmentNumOperations
+        # else:
+        #     print "No solution was found."
 
     def get_delta_weight(self, assignment, var, val):
         """
@@ -71,7 +71,7 @@ class BacktrackingSearch():
             if w == 0: return w
         return w
 
-    def solve(self, csp, numLineups, mcv = False, ac3 = False):
+    def solve(self, csp, numLineups, ep_greedy, mcv = False, ac3 = False):
         """
         Solves the given weighted CSP using heuristics as specified in the
         parameter. Note that unlike a typical unweighted CSP where the search
@@ -100,8 +100,15 @@ class BacktrackingSearch():
         # Set the total number of lineups to generate
         self.numLineups = numLineups
 
+        # Set the epsilon-greedy probability
+        self.ep_greedy = ep_greedy
+
         # Perform backtracking search.
-        self.backtrack({}, 0, 1, numLineups)
+        if ep_greedy == -1:
+            while len(self.allAssignments) < self.numLineups:
+                self.backtrack({}, 0, 1, numLineups)
+        else:
+            self.backtrack({}, 0, 1, numLineups)
         # Print summary of solutions.
         self.print_stats()
 
@@ -132,7 +139,7 @@ class BacktrackingSearch():
             return
 
         maxSalary = 9400
-        if score + (9 - numAssigned) * maxSalary < 60000:
+        if score + (9 - numAssigned) * maxSalary < 58000:
             return 
 
         minSalary = 4000
@@ -143,8 +150,8 @@ class BacktrackingSearch():
         assert weight > 0
         if numAssigned == self.csp.numVars:
             # A satisfiable solution have been found. Update the statistics.            
-            if len(self.allAssignments) % 1000 == 0:
-                print len(self.allAssignments)
+            # if len(self.allAssignments) % 1000 == 0:
+            #     print len(self.allAssignments)
             self.numAssignments += 1
             newAssignment = {}
             for var in self.csp.variables:
@@ -165,23 +172,34 @@ class BacktrackingSearch():
 
         # Select the next variable to be assigned.
         var = self.get_unassigned_variable(assignment)
-        # Sort values by efficiency
-        # sorted_by_projection = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
-        # ordered_values = sorted_by_projection
+        ordered_values = []
+        p = None
+        if self.ep_greedy == -1:
+            efficiency_list = [player[3] for player in self.domains[var]]
+            efficiency_sum = sum(efficiency_list)
+            efficiency_list = map(lambda x: x / efficiency_sum, efficiency_list)
+            pick = np.random.multinomial(1, efficiency_list)
+            for i in range(len(pick)):
+                if pick[i] == 1:
+                    ordered_values.append(self.domains[var][i])
+                    break
+        else:
+            p = np.random.random_sample()
+            if p <= self.ep_greedy:
+                ordered_values = sorted(self.domains[var], key=lambda tup: tup[3],reverse=True)
+            else:
+                salary_array = []
+                curr_players = assignment.values()
+                players = []
+                for player in self.domains[var]:
+                    if player not in curr_players:
+                        players.append(player)
+                        salary_array.append(float(player[1]))
 
-        # Need to generalize to check if we are using salaries or projections
-        salary_array = []
-        curr_players = assignment.values()
-        players = []
-        for player in self.domains[var]:
-            if player not in curr_players:
-                players.append(player)
-                salary_array.append(float(player[1]))
-
-        salary_sum = sum(salary_array)
-        prob_array = map(lambda x: x / salary_sum, salary_array)
-        stones = np.random.multinomial(numLineupsPerPlayer, prob_array)
-        ordered_values = {players[i]:stones[i] for i in range(0, len(stones)) if stones[i] > 0}
+                salary_sum = sum(salary_array)
+                prob_array = map(lambda x: x / salary_sum, salary_array)
+                stones = np.random.multinomial(numLineupsPerPlayer, prob_array)
+                ordered_values = {players[i]:stones[i] for i in range(0, len(stones)) if stones[i] > 0}
 
         # Continue the backtracking recursion using |var| and |ordered_values|.
         if not self.ac3:
@@ -190,7 +208,7 @@ class BacktrackingSearch():
                 deltaWeight = self.get_delta_weight(assignment, var, val)
                 if deltaWeight > 0:
                     assignment[var] = val
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val])
+                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
                     del assignment[var]
         else:
             # Arc consistency check is enabled.
@@ -210,7 +228,7 @@ class BacktrackingSearch():
                     # enforce arc consistency
                     self.arc_consistency_check(var)
 
-                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val])
+                    self.backtrack(assignment, numAssigned + 1, weight * deltaWeight, ordered_values[val] if (self.ep_greedy is not -1 and p > self.ep_greedy) else numLineupsPerPlayer)
                     # restore the previous domains
                     self.domains = localCopy
                     del assignment[var]

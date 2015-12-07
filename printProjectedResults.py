@@ -45,16 +45,17 @@ def printProjectedResults(search,scores,week,projections,percentLineupsUsed):
             sumTop += computedScores[i]
         else:
             sumBottom += computedScores[i]
-    print 'Week %s' % week
-    print "The max score was %f" % max(computedScores)
-    print "The min score was %f" % min(computedScores)
-    print "The average score was %f" % np.average(computedScores)
     # print sumBottom/(s-len(maxIndices)),sumTop/(len(maxIndices))
 
 
     numWinners = 0
+    average = np.average(computedScores)
     for i in maxIndices: 
         if computedScores[i] >= 111.21:
-            numWinners += 1            
-    print "The number of winners was %d out of %d" % (numWinners, len(maxIndices))
-    return numWinners
+            numWinners += 1 
+    # print 'Week %s' % week
+    # print "The max score was %f" % max(computedScores)
+    # print "The min score was %f" % min(computedScores)
+    # print "The average score was %f" % np.average(computedScores)           
+    # print "The number of winners was %d out of %d" % (numWinners, len(maxIndices))
+    return numWinners, s
