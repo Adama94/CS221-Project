@@ -4,6 +4,7 @@
 #   search.solve(csp)
 
 import numpy as np
+import random
 
 class BacktrackingSearch():
 
@@ -250,14 +251,14 @@ class BacktrackingSearch():
         @return var: a currently unassigned variable.
         """
 
-        for var in self.csp.variables:
-            if var not in assignment: return var
-        # choices = []
         # for var in self.csp.variables:
-        #     if var not in assignment:
-        #         choices.append(var)
-        # var = random.choice(choices)
-        # return var
+        #     if var not in assignment: return var
+        choices = []
+        for var in self.csp.variables:
+            if var not in assignment:
+                choices.append(var)
+        var = random.choice(choices)
+        return var
 
     # def arc_consistency_check(self, var):
     #     """

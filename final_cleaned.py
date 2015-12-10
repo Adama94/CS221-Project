@@ -41,7 +41,7 @@ def parseArgs():
 	elif flag == '-f':
 		ep_greedy = 1.0
 		numIters = int(sys.argv[3])
-		numEpGreedyTrials = 7
+		numEpGreedyTrials = 12
 	future = False if sys.argv[2] == '0' else True
 	return ep_greedy, numIters, numEpGreedyTrials, future
 
@@ -52,10 +52,13 @@ def futureProjections(ep_greedy, numIters, numEpGreedyTrials):
 
 	for i in range(0, numEpGreedyTrials):
 		if i > 0:
-			ep_greedy -= .2
+			ep_greedy -= .1
 
 		print 'BacktrackingSearch with epsilon-greedy value of %f' % ep_greedy
 		for k in range(1,4):
+			if i + 1 == numEpGreedyTrials and (k == 1 or k == 2):
+				continue
+
 			average = 0.0
 			for j in range(0, numIters):
 				search.solve(csp,numLineups,ep_greedy,k)
@@ -72,7 +75,7 @@ def futureProjections(ep_greedy, numIters, numEpGreedyTrials):
 def pastPerformance(ep_greedy, numIters, numEpGreedyTrials):
 	for i in range(0, numEpGreedyTrials):
 		if i > 0:
-			ep_greedy -= .2
+			ep_greedy -= .1
 
 		print 'BacktrackingSearch with epsilon-greedy value of %f' % ep_greedy
 		for k in range(1, 4):
